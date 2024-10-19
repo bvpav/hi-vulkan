@@ -6,6 +6,12 @@ use vulkano::instance::{Instance, InstanceCreateInfo};
 use vulkano::memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, StandardMemoryAllocator};
 use vulkano::VulkanLibrary;
 
+#[derive(BufferContents, Debug)]
+#[repr(C)]
+struct Thing {
+    number: u32,
+}
+
 fn main() {
     let library = VulkanLibrary::new().expect("no local Vulkan library/DLL");
     let instance = Instance::new(library, InstanceCreateInfo::default()).expect("failed to create instance");
@@ -33,8 +39,8 @@ fn main() {
     ).expect("failed to create logical device");
     let allocator = Arc::new(StandardMemoryAllocator::new_default(device.clone()));
 
-    let iter = (0..128).map(|_| 5u8);
-    let _buffer = Buffer::from_iter(
+    let iter = (0..128).map(|i| Thing { number: i * 2 });
+    let buffer = Buffer::from_iter(
         allocator.clone(),
         BufferCreateInfo {
             usage: BufferUsage::UNIFORM_BUFFER,
@@ -45,6 +51,13 @@ fn main() {
                 | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
             ..Default::default()
         },
-        iter
+        iter,
     ).unwrap();
+    let content = buffer.read().unwrap();
+    let _ = dbg!(content.iter());
+    drop(content);
+
+    let mut content = buffer.write().unwrap();
+    content[1].number += 1;
+    dbg!(content);
 }
