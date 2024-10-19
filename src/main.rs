@@ -6,13 +6,6 @@ use vulkano::instance::{Instance, InstanceCreateInfo};
 use vulkano::memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, StandardMemoryAllocator};
 use vulkano::VulkanLibrary;
 
-#[derive(BufferContents)]
-#[repr(C)]
-struct MyStruct {
-    a: u32,
-    b: u32,
-}
-
 fn main() {
     let library = VulkanLibrary::new().expect("no local Vulkan library/DLL");
     let instance = Instance::new(library, InstanceCreateInfo::default()).expect("failed to create instance");
@@ -28,7 +21,7 @@ fn main() {
             properties.queue_flags.contains(QueueFlags::GRAPHICS)
         })
         .expect("could not find a graphical queue family") as u32;
-    let (device, mut queues) = Device::new(
+    let (device, mut _queues) = Device::new(
         physical_device,
         DeviceCreateInfo {
             queue_create_infos: vec![QueueCreateInfo {
@@ -40,8 +33,8 @@ fn main() {
     ).expect("failed to create logical device");
     let allocator = Arc::new(StandardMemoryAllocator::new_default(device.clone()));
 
-    let data = MyStruct { a: 69, b: 420 };
-    let _buffer = Buffer::from_data(
+    let iter = (0..128).map(|_| 5u8);
+    let _buffer = Buffer::from_iter(
         allocator.clone(),
         BufferCreateInfo {
             usage: BufferUsage::UNIFORM_BUFFER,
@@ -52,6 +45,6 @@ fn main() {
                 | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
             ..Default::default()
         },
-        data,
-    ).expect("failed to create buffer");
+        iter
+    ).unwrap();
 }
