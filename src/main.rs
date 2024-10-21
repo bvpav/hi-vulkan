@@ -66,15 +66,20 @@ fn main() {
 
     let vertices = [
         MyVertex {
-            position: [-0.5, -0.5],
+            position: [-0.5, 0.0],
         },
         MyVertex {
             position: [0.0, 0.5],
         },
         MyVertex {
-            position: [0.5, -0.25],
+            position: [0.5, 0.0],
+        },
+        MyVertex {
+            position: [0.0, -0.5],
         },
     ];
+    let indices = [0u32, 1, 2, 2, 3, 0];
+
     let vertex_buffer = Buffer::from_iter(
         memory_allocator.clone(),
         BufferCreateInfo {
@@ -87,6 +92,20 @@ fn main() {
             ..Default::default()
         },
         vertices,
+    )
+    .unwrap();
+    let index_buffer = Buffer::from_iter(
+        memory_allocator.clone(),
+        BufferCreateInfo {
+            usage: BufferUsage::INDEX_BUFFER,
+            ..Default::default()
+        },
+        AllocationCreateInfo {
+            memory_type_filter: MemoryTypeFilter::PREFER_DEVICE
+                | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
+            ..Default::default()
+        },
+        indices,
     )
     .unwrap();
 
@@ -259,7 +278,9 @@ fn main() {
         .unwrap()
         .bind_vertex_buffers(0, vertex_buffer.clone())
         .unwrap()
-        .draw(3, 1, 0, 0)
+        .bind_index_buffer(index_buffer.clone())
+        .unwrap()
+        .draw_indexed(indices.len().try_into().unwrap(), 1, 0, 0, 0)
         .unwrap()
         .end_render_pass(SubpassEndInfo::default())
         .unwrap()
