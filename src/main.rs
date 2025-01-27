@@ -183,9 +183,7 @@ fn main() {
         let vs_entry_point = vertex_shader.entry_point("main").unwrap();
         let fs_entry_point = fragment_shader.entry_point("main").unwrap();
 
-        let vertex_input_state = MyVertex::per_vertex()
-            .definition(&vs_entry_point.info().input_interface)
-            .unwrap();
+        let vertex_input_state = MyVertex::per_vertex().definition(&vs_entry_point).unwrap();
 
         let stages = [
             PipelineShaderStageCreateInfo::new(vs_entry_point),
@@ -256,8 +254,8 @@ fn main() {
     let command_buffer_allocator =
         StandardCommandBufferAllocator::new(device.clone(), Default::default());
     let mut command_buffer_builder = AutoCommandBufferBuilder::primary(
-        &command_buffer_allocator,
-        queue.queue_family_index(), // Q: Is it the same as `queue_family_index`?
+        Arc::new(command_buffer_allocator),
+        queue.queue_family_index(),
         CommandBufferUsage::OneTimeSubmit,
     )
     .unwrap();
@@ -279,9 +277,13 @@ fn main() {
         .bind_vertex_buffers(0, vertex_buffer.clone())
         .unwrap()
         .bind_index_buffer(index_buffer.clone())
-        .unwrap()
-        .draw_indexed(indices.len().try_into().unwrap(), 1, 0, 0, 0)
-        .unwrap()
+        .unwrap();
+    unsafe {
+        command_buffer_builder
+            .draw_indexed(indices.len().try_into().unwrap(), 1, 0, 0, 0)
+            .unwrap();
+    }
+    command_buffer_builder
         .end_render_pass(SubpassEndInfo::default())
         .unwrap()
         .copy_image_to_buffer(CopyImageToBufferInfo::image_buffer(
